@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, ArrowUpRight, ArrowDownRight, Wallet } from 'lucide-react';
+import { Plus, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { getSummary, createTransaction } from '../api';
 import TransactionModal from '../components/TransactionModal';
+import { getAccountIcon } from '../components/AccountIcons';
 
 export default function Dashboard() {
   const [summary, setSummary] = useState(null);
@@ -33,17 +34,17 @@ export default function Dashboard() {
     }
   };
 
-  // 获取账户对应的品牌色和图标
+  // 获取账户对应的品牌色
   const getAccountStyle = (name) => {
     const styles = {
-      'alipay': { color: '#1677FF', bg: '#E6F4FF', icon: '💙', label: '支付宝' },
-      'wechat': { color: '#07C160', bg: '#E8FAEA', icon: '💚', label: '微信' },
-      'icbc': { color: '#C41230', bg: '#FEEFEF', icon: '🏦', label: '工行' },
-      'boc': { color: '#E60012', bg: '#FEEFEF', icon: '🏛️', label: '中行' },
-      'huabei': { color: '#FF6B35', bg: '#FFF2E8', icon: '🐱', label: '花呗' },
-      'jd_baitiao': { color: '#E4393C', bg: '#FEEFEF', icon: '🐶', label: '白条' }
+      'alipay': { color: '#1677FF', bg: '#E6F4FF', label: '支付宝' },
+      'wechat': { color: '#07C160', bg: '#E8FAEA', label: '微信' },
+      'icbc': { color: '#C41230', bg: '#FEEFEF', label: '工行' },
+      'boc': { color: '#E60012', bg: '#FEEFEF', label: '中行' },
+      'huabei': { color: '#FF6B35', bg: '#FFF2E8', label: '花呗' },
+      'jd_baitiao': { color: '#E4393C', bg: '#FEEFEF', label: '白条' }
     };
-    return styles[name] || { color: '#3B82F6', bg: '#EFF6FF', icon: '💰', label: '账户' };
+    return styles[name] || { color: '#3B82F6', bg: '#EFF6FF', label: '账户' };
   };
 
   if (loading) {
@@ -54,8 +55,18 @@ export default function Dashboard() {
     );
   }
 
-  const assetAccounts = summary?.accounts?.filter(a => !a.is_debt) || [];
-  const debtAccounts = summary?.accounts?.filter(a => a.is_debt) || [];
+  // 账户排序优先级
+  const accountOrder = ['alipay', 'wechat', 'icbc', 'boc', 'huabei', 'jd_baitiao'];
+  const sortAccounts = (accounts) => {
+    return [...accounts].sort((a, b) => {
+      const orderA = accountOrder.indexOf(a.name);
+      const orderB = accountOrder.indexOf(b.name);
+      return (orderA === -1 ? 999 : orderA) - (orderB === -1 ? 999 : orderB);
+    });
+  };
+
+  const assetAccounts = sortAccounts(summary?.accounts?.filter(a => !a.is_debt) || []);
+  const debtAccounts = sortAccounts(summary?.accounts?.filter(a => a.is_debt) || []);
 
   return (
     <div className="px-5 pt-8 pb-4">
@@ -67,10 +78,6 @@ export default function Dashboard() {
       >
         <div className="flex items-center justify-between mb-2">
           <p className="text-slate-500 text-sm font-medium">我的净资产</p>
-          <div className="w-8 h-8 rounded-full bg-slate-200 overflow-hidden">
-             {/* 头像占位 */}
-             <div className="w-full h-full bg-gradient-to-tr from-blue-400 to-purple-400"></div>
-          </div>
         </div>
         <h1 className="text-4xl font-bold text-slate-900 font-number tracking-tight">
           ¥{(summary?.net_worth || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2 })}
@@ -109,24 +116,35 @@ export default function Dashboard() {
         transition={{ delay: 0.1 }}
         className="mb-8"
       >
-        <h2 className="text-base font-bold text-slate-900 mb-4 px-1">资产账户</h2>
+        <div className="flex items-center justify-between mb-4 px-1">
+          <h2 className="text-base font-bold text-slate-900">资产账户</h2>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setIsModalOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 text-white text-sm font-medium rounded-full shadow-lg shadow-slate-900/20"
+          >
+            <Plus size={14} strokeWidth={2.5} />
+            <span>记一笔</span>
+          </motion.button>
+        </div>
         <div className="grid grid-cols-2 gap-3">
           {assetAccounts.map((account, index) => {
             const style = getAccountStyle(account.name);
             return (
               <motion.div
                 key={account.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 + index * 0.05 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.2 }}
                 className="modern-card p-4 flex flex-col justify-between h-32"
               >
                 <div className="flex justify-between items-start">
                   <div 
-                    className="w-10 h-10 rounded-xl flex items-center justify-center text-xl"
+                    className="w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden"
                     style={{ backgroundColor: style.bg }}
                   >
-                    {style.icon}
+                    {getAccountIcon(account.name, 28)}
                   </div>
                 </div>
                 <div>
@@ -149,26 +167,25 @@ export default function Dashboard() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.2 }}
-        className="mb-24"
       >
         <h2 className="text-base font-bold text-slate-900 mb-4 px-1">信用账户</h2>
-        <div className="space-y-3">
+        <div className="space-y-3 pb-24">
           {debtAccounts.map((account, index) => {
             const style = getAccountStyle(account.name);
             return (
               <motion.div
                 key={account.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 + index * 0.05 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.2 }}
                 className="modern-card p-4 flex items-center justify-between"
               >
                 <div className="flex items-center gap-4">
                   <div 
-                    className="w-12 h-12 rounded-2xl flex items-center justify-center text-xl"
+                    className="w-12 h-12 rounded-2xl flex items-center justify-center overflow-hidden"
                     style={{ backgroundColor: style.bg }}
                   >
-                    {style.icon}
+                    {getAccountIcon(account.name, 32)}
                   </div>
                   <div>
                     <p className="text-slate-900 font-bold">{account.name_cn}</p>
@@ -185,16 +202,6 @@ export default function Dashboard() {
           })}
         </div>
       </motion.section>
-
-      {/* 悬浮添加按钮 */}
-      <motion.button
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        onClick={() => setIsModalOpen(true)}
-        className="fixed right-6 bottom-24 w-14 h-14 rounded-full bg-slate-900 text-white shadow-xl shadow-slate-900/20 flex items-center justify-center z-30"
-      >
-        <Plus size={28} strokeWidth={2.5} />
-      </motion.button>
 
       <TransactionModal
         isOpen={isModalOpen}

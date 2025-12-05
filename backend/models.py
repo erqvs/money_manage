@@ -1,7 +1,11 @@
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 
 db = SQLAlchemy()
+
+# 北京时间 UTC+8
+def beijing_now():
+    return datetime.now(timezone(timedelta(hours=8))).replace(tzinfo=None)
 
 class Account(db.Model):
     """账户模型 - 存储各个账户的余额"""
@@ -14,8 +18,8 @@ class Account(db.Model):
     is_debt = db.Column(db.Boolean, default=False)  # 是否是欠款类型
     icon = db.Column(db.String(50), default='wallet')  # 图标
     color = db.Column(db.String(20), default='#3B82F6')  # 颜色
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=beijing_now)
+    updated_at = db.Column(db.DateTime, default=beijing_now, onupdate=beijing_now)
     
     def to_dict(self):
         return {
@@ -40,7 +44,7 @@ class Transaction(db.Model):
     amount = db.Column(db.Float, nullable=False)  # 金额（正数为增加，负数为减少）
     transaction_type = db.Column(db.String(20), nullable=False)  # 'increase' 或 'decrease'
     note = db.Column(db.String(255), default='')  # 备注
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=beijing_now)
     
     account = db.relationship('Account', backref=db.backref('transactions', lazy=True))
     

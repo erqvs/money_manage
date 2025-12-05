@@ -1,0 +1,28 @@
+---
+alwaysApply: true
+---
+
+# 服务器信息
+
+## 云服务器
+- **IP 地址**: 47.98.167.251
+- **项目路径**: /var/www/money_manage
+- **进程管理**: PM2
+
+## 服务端口
+| 服务 | 端口 | PM2 名称 |
+|------|------|----------|
+| 前端 (Vite + React) | 3000 | money-frontend |
+| 后端 (Flask) | 5001 | money-backend |
+
+## 数据库信息
+- **类型**: MySQL
+- **主机**: 112.124.97.21
+- **端口**: 3306
+- **数据库名**: money_manage
+- **用户名**: money_manager
+- **密码**: fawecafawerwesdfsdxafggsdfsdfwqeqwe
+
+## 访问地址
+- 前端: http://47.98.167.251:3000
+- 后端 API: http://47.98.167.251:5001/api/

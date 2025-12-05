@@ -1,0 +1,13 @@
+{
+  "appId": "site.linkmate.money",
+  "appName": "金融管家",
+  "webDir": "dist",
+  "server": {
+    "url": "https://money.linkmate.site",
+    "cleartext": true
+  },
+  "ios": {
+    "contentInset": "automatic",
+    "backgroundColor": "#f8fafc"
+  }
+}
